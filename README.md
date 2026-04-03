@@ -1,4 +1,4 @@
-C compiler compiling C.
+C compiler compiling C (following Nora Sandler's *Writing a C Compiler*).
 
 # Why the name?
 
@@ -17,3 +17,7 @@ opam install . --deps-only
 eval $(opam env)
 dune build
 ```
+
+# Extra stuff
+
+I'm trying to take notes as I go along. These will be stored in [`NOTES.md`](./NOTES.md).
