@@ -2,3 +2,7 @@
  (public_name cccc)
  (name main)
  (libraries cccc))
+
+(executable
+ (public_name ccccd)
+ (name driver))

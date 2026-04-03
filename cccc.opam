@@ -7,9 +7,9 @@ maintainer: ["Penelope Yong <penelopeysm@gmail.com>"]
 authors: ["Penelope Yong <penelopeysm@gmail.com>"]
 license: "LICENSE"
 tags: ["c" "compiler"]
-homepage: "https://github.com/penelopeysm/cc"
-doc: "https://github.com/penelopeysm/cc"
-bug-reports: "https://github.com/penelopeysm/cc/issues"
+homepage: "https://github.com/penelopeysm/cccc"
+doc: "https://github.com/penelopeysm/cccc"
+bug-reports: "https://github.com/penelopeysm/cccc/issues"
 depends: [
   "dune" {>= "3.22"}
   "ocaml"
@@ -29,5 +29,5 @@ build: [
     "@doc" {with-doc}
   ]
 ]
-dev-repo: "git+https://github.com/penelopeysm/cc.git"
+dev-repo: "git+https://github.com/penelopeysm/cccc.git"
 x-maintenance-intent: ["(latest)"]
