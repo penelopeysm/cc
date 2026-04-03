@@ -5,7 +5,7 @@
 (generate_opam_files true)
 
 (source
- (github penelopeysm/cc))
+ (github penelopeysm/cccc))
 
 (authors "Penelope Yong <penelopeysm@gmail.com>")
 
@@ -13,7 +13,7 @@
 
 (license LICENSE)
 
-(documentation https://github.com/penelopeysm/cc)
+(documentation https://github.com/penelopeysm/cccc)
 
 (package
  (name cccc)
