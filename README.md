@@ -1,4 +1,8 @@
-C compiler.
+C compiler compiling C.
+
+# Why the name?
+
+I tried to call it `cc`, but that led to a ton of clashes with the system's existing `cc`.
 
 # Setup
 
