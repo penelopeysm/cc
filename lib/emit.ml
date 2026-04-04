@@ -16,9 +16,11 @@ let emit_instruction (buf : Buffer.t) (inst : Asm.instruction) : unit =
   | Asm.Ret -> Buffer.add_string buf "  ret\n"
 
 let emit_func (buf : Buffer.t) (func : Asm.func) : unit =
-  (* TODO(portability): On macOS, x86 symbol names are prefixed with underscores
-     -- this is currently hardcoded *)
-  let mangled_name = "_" ^ func.name in
+  (* On macOS, x86 symbol names are prefixed with underscores -- not necessary
+     on Linux *)
+  let mangled_name =
+    match Platform.system with "macosx" -> "_" ^ func.name | _ -> func.name
+  in
   let global_decl = "  .globl " ^ mangled_name in
   Buffer.add_string buf global_decl;
   Buffer.add_char buf '\n';

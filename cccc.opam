@@ -13,6 +13,9 @@ bug-reports: "https://github.com/penelopeysm/cccc/issues"
 depends: [
   "dune" {>= "3.22"}
   "ocaml"
+  "menhir"
+  "ANSITerminal"
+  "climate"
   "odoc" {with-doc}
 ]
 build: [
