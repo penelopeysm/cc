@@ -24,7 +24,8 @@ let main ~(fname : string) ~(retain_assembly : bool) ~(run : bool)
   (* Get name of preprocessed file *)
   let preproc_fname = replace_extension fname ".i" in
   let preproc_command =
-    Printf.sprintf "clang -E -P %s -o %s" fname preproc_fname
+    Printf.sprintf "clang -E -P %s -o %s" (Filename.quote fname)
+      (Filename.quote preproc_fname)
   in
   try_compilation_stage preproc_command "Preprocessing" [ preproc_fname ];
 
@@ -33,7 +34,9 @@ let main ~(fname : string) ~(retain_assembly : bool) ~(run : bool)
   (* let compiler_command = (Printf.sprintf "clang -S -O %s -o %s" preproc_fname assembly_fname) in *)
   let extra_flags = if dump_ast then "--dump-ast" else "" in
   let compiler_command =
-    Printf.sprintf "dune exec cccc -- %s -o %s %s" preproc_fname assembly_fname
+    Printf.sprintf "dune exec cccc -- %s -o %s %s"
+      (Filename.quote preproc_fname)
+      (Filename.quote assembly_fname)
       extra_flags
   in
   try_compilation_stage compiler_command "Compilation"
@@ -42,7 +45,9 @@ let main ~(fname : string) ~(retain_assembly : bool) ~(run : bool)
   (* Run the assembler and linker in one shot *)
   let executable_fname = Filename.remove_extension fname in
   let link_command =
-    Printf.sprintf "clang %s -o %s" assembly_fname executable_fname
+    Printf.sprintf "clang %s -o %s"
+      (Filename.quote assembly_fname)
+      (Filename.quote executable_fname)
   in
   try_compilation_stage link_command "Assembling and linking"
     [ preproc_fname; assembly_fname; executable_fname ];

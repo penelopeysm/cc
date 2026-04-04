@@ -4,7 +4,7 @@
   exception Lexing_error of string
 }
 
-let int = '-'? ['0'-'9'] ['0'-'9']*
+let int = ['0'-'9'] ['0'-'9']*
 let white = [' ' '\t']+
 let newline = "\r\n" | '\r' | '\n'
 let identifier = ['a'-'z' 'A'-'Z' '_'] ['a'-'z' 'A'-'Z' '0'-'9' '_']*
@@ -25,6 +25,6 @@ rule read =
   | '{' { LEFT_BRACE }
   | '}' { RIGHT_BRACE }
   | ';' { SEMICOLON }
+  | eof { EOF }
   | _ { raise (Lexing_error ("Unexpected character: " ^ (Lexing.lexeme lexbuf)))
     }
-  | eof { EOF }
