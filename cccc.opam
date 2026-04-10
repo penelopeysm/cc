@@ -16,6 +16,7 @@ depends: [
   "menhir"
   "ANSITerminal"
   "climate"
+  "js_of_ocaml"
   "odoc" {with-doc}
 ]
 build: [

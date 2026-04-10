@@ -1,0 +1,11 @@
+(executable
+ (name main)
+ (modes js)
+ (libraries cccc js_of_ocaml))
+
+(rule
+ (deps main.bc.js)
+ (target main.js)
+ (mode promote)
+ (action
+  (copy %{deps} %{target})))

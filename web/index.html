@@ -1,0 +1,27 @@
+<html>
+    <head>
+        <script type="text/javascript" src="main.js"></script>
+
+        <script type="text/javascript">
+            function compileFromTextArea() {
+                const cSource = document.getElementById("c-source").value;
+                try {
+                    const asm = compile(cSource);
+                    document.getElementById("assembly").value = asm;
+                } catch (error) {
+                    window.alert("Compilation error: " + error.message);
+                    return;
+                }
+            }
+        </script>
+
+        <title>CCCC</title>
+    </head>
+
+    <body>
+        <textarea id="c-source" rows="20" cols="80"></textarea>
+        <button onclick="compileFromTextArea()">Compile</button>
+        <br />
+        <textarea id="assembly" rows="20" cols="80"></textarea>
+    </body>
+</html>
