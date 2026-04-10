@@ -5,6 +5,12 @@
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>CCCC</title>
 
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/codemirror.min.css" />
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/codemirror.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/mode/clike/clike.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/mode/gas/gas.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/keymap/vim.min.js"></script>
+
         <style>
             * {
                 margin: 0;
@@ -26,30 +32,45 @@
             }
 
             header h1 {
-                font-size: 1.5rem;
+                font-size: 1.75rem;
                 font-weight: 600;
             }
 
             header p {
-                font-size: 0.85rem;
+                font-size: 1rem;
                 color: #888;
                 margin-top: 0.25rem;
+            }
+
+            .toggles {
+                margin-top: 0.5rem;
+                font-size: 0.95rem;
+                color: #888;
+            }
+
+            .toggles label {
+                margin: 0 0.5rem;
             }
 
             .container {
                 display: flex;
                 flex: 1;
+                margin: 1rem;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                overflow: hidden;
             }
 
             .pane {
                 flex: 1;
                 display: flex;
                 flex-direction: column;
+                min-width: 0;
             }
 
             .pane-header {
                 padding: 0.5rem 1rem;
-                font-size: 0.75rem;
+                font-size: 0.85rem;
                 font-weight: 600;
                 text-transform: uppercase;
                 letter-spacing: 0.08em;
@@ -57,50 +78,73 @@
                 border-bottom: 1px solid #ddd;
             }
 
-            textarea {
-                flex: 1;
-                padding: 1rem;
-                font-family: monospace;
-                font-size: 0.9rem;
-                line-height: 1.5;
-                border: none;
-                outline: none;
-                resize: none;
-                tab-size: 4;
-            }
-
-            #assembly {
-                background: #f8f8f8;
-            }
-
             .pane + .pane {
                 border-left: 1px solid #ddd;
+            }
+
+            .CodeMirror {
+                flex: 1;
+                height: auto;
+                font-size: 1rem;
+                line-height: 1.5;
             }
         </style>
 
         <script type="text/javascript" src="main.js"></script>
         <script type="text/javascript">
-            function compileFromTextArea() {
-                const cSource = document.getElementById("c-source").value;
+            let sourceEditor, asmEditor;
+            let debounceTimer;
+
+            let currentKeyMapRadio = null;
+
+            function setKeyMap(keymap) {
+                if (keymap === "emacs") {
+                    window.alert("What the HELL.");
+                    currentKeyMapRadio.checked = true;
+                    return;
+                }
+                currentKeyMapRadio = event.target;
+                sourceEditor.setOption("keyMap", keymap);
+            }
+
+            function compileSource() {
+                const cSource = sourceEditor.getValue();
                 if (!cSource.trim()) {
-                    document.getElementById("assembly").value = "";
+                    asmEditor.setValue("");
                     return;
                 }
                 try {
                     const asm = compile(cSource);
-                    document.getElementById("assembly").value = asm;
+                    asmEditor.setValue(asm);
                 } catch (error) {
-                    document.getElementById("assembly").value = "Compilation error";
+                    asmEditor.setValue("Compilation error");
                 }
             }
 
-            let debounceTimer;
             document.addEventListener("DOMContentLoaded", () => {
-                document.getElementById("c-source").addEventListener("input", () => {
-                    clearTimeout(debounceTimer);
-                    debounceTimer = setTimeout(compileFromTextArea, 300);
+                sourceEditor = CodeMirror(document.getElementById("c-source"), {
+                    value: "int main(void) {\n    return 42;\n}",
+                    mode: "text/x-csrc",
+                    keyMap: "vim",
+                    lineNumbers: true,
+                    tabSize: 4,
+                    indentUnit: 4,
                 });
-                compileFromTextArea();
+
+                asmEditor = CodeMirror(document.getElementById("assembly"), {
+                    mode: "gas",
+                    lineNumbers: true,
+                    readOnly: true,
+                    tabSize: 4,
+                });
+
+                sourceEditor.on("change", () => {
+                    clearTimeout(debounceTimer);
+                    debounceTimer = setTimeout(compileSource, 300);
+                });
+
+                currentKeyMapRadio = document.getElementById("keymap-vim");
+                compileSource();
             });
         </script>
     </head>
@@ -109,19 +153,23 @@
         <header>
             <h1>CCCC</h1>
             <p>C Source &rarr; x86-64 Assembly</p>
+            <p><a href="https://github.com/penelopeysm/cccc">GitHub</a></p>
+            <div class="toggles" style="margin-top: 1rem;">
+                <label><input type="radio" name="keymap" id="keymap-normal" onchange="setKeyMap('default')"> Default</label>
+                <label><input type="radio" name="keymap" id="keymap-vim" onchange="setKeyMap('vim')" checked> Vim</label>
+                <label><input type="radio" name="keymap" onchange="setKeyMap('emacs')"> Emacs</label>
+            </div>
         </header>
 
         <div class="container">
             <div class="pane">
                 <div class="pane-header">C Source</div>
-                <textarea id="c-source" spellcheck="false">int main(void) {
-    return 42;
-}</textarea>
+                <div id="c-source"></div>
             </div>
 
             <div class="pane">
                 <div class="pane-header">Assembly</div>
-                <textarea id="assembly" readonly spellcheck="false"></textarea>
+                <div id="assembly"></div>
             </div>
         </div>
     </body>
