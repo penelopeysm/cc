@@ -1,27 +1,128 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
     <head>
-        <script type="text/javascript" src="main.js"></script>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>CCCC</title>
 
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+                font-family: sans-serif;
+                min-height: 100vh;
+                display: flex;
+                flex-direction: column;
+            }
+
+            header {
+                padding: 1.5rem 2rem;
+                text-align: center;
+                border-bottom: 1px solid #ddd;
+            }
+
+            header h1 {
+                font-size: 1.5rem;
+                font-weight: 600;
+            }
+
+            header p {
+                font-size: 0.85rem;
+                color: #888;
+                margin-top: 0.25rem;
+            }
+
+            .container {
+                display: flex;
+                flex: 1;
+            }
+
+            .pane {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+            }
+
+            .pane-header {
+                padding: 0.5rem 1rem;
+                font-size: 0.75rem;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.08em;
+                color: #888;
+                border-bottom: 1px solid #ddd;
+            }
+
+            textarea {
+                flex: 1;
+                padding: 1rem;
+                font-family: monospace;
+                font-size: 0.9rem;
+                line-height: 1.5;
+                border: none;
+                outline: none;
+                resize: none;
+                tab-size: 4;
+            }
+
+            #assembly {
+                background: #f8f8f8;
+            }
+
+            .pane + .pane {
+                border-left: 1px solid #ddd;
+            }
+        </style>
+
+        <script type="text/javascript" src="main.js"></script>
         <script type="text/javascript">
             function compileFromTextArea() {
                 const cSource = document.getElementById("c-source").value;
+                if (!cSource.trim()) {
+                    document.getElementById("assembly").value = "";
+                    return;
+                }
                 try {
                     const asm = compile(cSource);
                     document.getElementById("assembly").value = asm;
                 } catch (error) {
-                    window.alert("Compilation error: " + error.message);
-                    return;
+                    document.getElementById("assembly").value = "Compilation error";
                 }
             }
-        </script>
 
-        <title>CCCC</title>
+            let debounceTimer;
+            document.addEventListener("DOMContentLoaded", () => {
+                document.getElementById("c-source").addEventListener("input", () => {
+                    clearTimeout(debounceTimer);
+                    debounceTimer = setTimeout(compileFromTextArea, 300);
+                });
+                compileFromTextArea();
+            });
+        </script>
     </head>
 
     <body>
-        <textarea id="c-source" rows="20" cols="80"></textarea>
-        <button onclick="compileFromTextArea()">Compile</button>
-        <br />
-        <textarea id="assembly" rows="20" cols="80"></textarea>
+        <header>
+            <h1>CCCC</h1>
+            <p>C Source &rarr; x86-64 Assembly</p>
+        </header>
+
+        <div class="container">
+            <div class="pane">
+                <div class="pane-header">C Source</div>
+                <textarea id="c-source" spellcheck="false">int main(void) {
+    return 42;
+}</textarea>
+            </div>
+
+            <div class="pane">
+                <div class="pane-header">Assembly</div>
+                <textarea id="assembly" readonly spellcheck="false"></textarea>
+            </div>
+        </div>
     </body>
 </html>
