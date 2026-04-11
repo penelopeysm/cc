@@ -20,6 +20,9 @@ rule read =
       | "return" -> RETURN
       | id -> IDENTIFIER id
     }
+  | "--" { DECREMENT }
+  | '-' { MINUS }
+  | '~' { COMPLEMENT }
   | '(' { LEFT_PAREN }
   | ')' { RIGHT_PAREN }
   | '{' { LEFT_BRACE }

@@ -1,4 +1,5 @@
 open Cccc
 open Js_of_ocaml
 
-let () = Js.export "compile" Cccc.Main.compile_source
+let compile_source (source : string) : string = "TODO"
+let () = Js.export "compile" compile_source

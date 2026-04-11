@@ -1,20 +1,19 @@
-type operand = Register | Immediate of int
-type instruction = Mov of { src : operand; dst : operand } | Ret
-type func = { name : string; insts : instruction list }
-type t = { entry : func }
+type register = AX | R10
 
-let lower_exp (exp : Ast.exp) : operand =
-  match exp with Ast.IntLiteral i -> Immediate i
+type operand =
+  | Register of register
+  | Immediate of int
+  | PseudoRegister of string
+  (* convention here is that Stack holds negative numbers *)
+  | Stack of int
 
-let lower_statement (stmt : Ast.statement) : instruction list =
-  match stmt with
-  | Ast.Return exp -> [ Mov { src = lower_exp exp; dst = Register }; Ret ]
+type unary_operator = Neg | Not
 
-let lower_func (f : Ast.func) : func =
-  match f with
-  | Ast.Function { name = Ast.Identifier id; body } ->
-      let insts = List.concat_map lower_statement [ body ] in
-      { name = id; insts }
+type instruction =
+  | Mov of { src : operand; dst : operand }
+  | Ret
+  | Unary of { op : unary_operator; target : operand }
+  | AllocateStack of { size : int }
 
-let lower (ast : Ast.t) : t =
-  match ast with Ast.Programme func -> { entry = lower_func func }
+type func = Function of { name : string; insts : instruction list }
+type t = Programme of { entry : func }
