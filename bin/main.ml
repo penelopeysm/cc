@@ -2,12 +2,20 @@ open Climate
 open Cccc
 
 let main ~(input_fname : string) ~(output_fname : string option)
-    ~(dump_ast : bool) ~(dump_ir : bool) : unit =
+    ~(dump_ast : bool) ~(dump_ir : bool) ~(parse : bool) ~(tacky : bool) : unit
+    =
   In_channel.with_open_text input_fname (fun inx ->
       let lexbuf = Lexing.from_channel inx in
       let ast = Parser.programme Lexer.read lexbuf in
-      if dump_ast then Ast.pp_t ast;
+      if parse then exit 0;
+
+      if dump_ast then begin
+        let buf = Ast.Pp.pp ast in
+        prerr_string (Buffer.contents buf)
+      end;
       let ir = Ir_gen.ir_of_ast ast in
+      if tacky then exit 0;
+
       if dump_ir then Ir.pp_t ir;
       let asm = Asm_gen.asm_of_ir ir in
       let asm_text = Emit.string_of_asm asm in
@@ -34,7 +42,14 @@ let () =
       flag [ "a"; "dump-ast" ] ~doc:"Additionally dump the AST to stderr"
     and+ dump_ir =
       flag [ "i"; "dump-ir" ] ~doc:"Additionally dump the IR to stderr"
+    and+ parse =
+      flag [ "parse" ]
+        ~doc:"Only perform parsing and exit silently (for testing purposes)"
+    and+ tacky =
+      flag [ "tacky" ]
+        ~doc:
+          "Only perform IR generation and exit silently (for testing purposes)"
     in
-    main ~input_fname ~output_fname ~dump_ast ~dump_ir
+    main ~input_fname ~output_fname ~dump_ast ~dump_ir ~parse ~tacky
   in
   Command.run command
