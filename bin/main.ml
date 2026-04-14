@@ -1,6 +1,24 @@
 open Climate
 open Cccc
 
+let print_with_box (styles : ANSITerminal.style list) (title : string)
+    (content : string) : unit =
+  let styles_with_bold =
+    if List.mem ANSITerminal.Bold styles then styles
+    else ANSITerminal.Bold :: styles
+  in
+  let border = String.make (String.length title + 4) '*' in
+  ANSITerminal.prerr_string styles border;
+  prerr_newline ();
+  ANSITerminal.prerr_string styles_with_bold ("* " ^ title ^ " *");
+  prerr_newline ();
+  ANSITerminal.prerr_string styles border;
+  prerr_newline ();
+  ANSITerminal.prerr_string styles content;
+  prerr_newline ();
+  ANSITerminal.prerr_string styles border;
+  prerr_newline ()
+
 let main ~(input_fname : string) ~(output_fname : string option)
     ~(dump_ast : bool) ~(dump_ir : bool) ~(parse : bool) ~(tacky : bool) : unit
     =
@@ -11,12 +29,20 @@ let main ~(input_fname : string) ~(output_fname : string option)
 
       if dump_ast then begin
         let buf = Ast.Pp.pp ast in
-        prerr_string (Buffer.contents buf)
+        print_with_box
+          [ ANSITerminal.Foreground ANSITerminal.Green ]
+          "AST" (Buffer.contents buf)
       end;
       let ir = Ir_gen.ir_of_ast ast in
       if tacky then exit 0;
 
-      if dump_ir then Ir.pp_t ir;
+      if dump_ir then begin
+        let buf = Ir.Pp.pp ir in
+        print_with_box
+          [ ANSITerminal.Foreground ANSITerminal.Blue ]
+          "IR" (Buffer.contents buf)
+      end;
+
       let asm = Asm_gen.asm_of_ir ir in
       let asm_text = Emit.string_of_asm asm in
       match output_fname with

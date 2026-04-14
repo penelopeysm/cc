@@ -1,61 +1,64 @@
-let indent_size = 2
-
-let prerr_indent (indent_level : int) : unit =
-  let indent_str = String.make (indent_level * indent_size) ' ' in
-  Stdlib.prerr_string indent_str
-
 type var = Var of { identifier : string }
-
-let pp_var = function
-  | Var { identifier } -> prerr_string @@ "Var(%" ^ identifier ^ ")"
-
 type value = Constant of int | Variable of var
-
-let pp_value = function
-  | Constant i ->
-      prerr_string "Constant(";
-      prerr_string (string_of_int i);
-      prerr_string ")"
-  | Variable v -> pp_var v
-
 type unary_operator = Minus | Complement
-
-let pp_unary_operator = function
-  | Minus -> prerr_string "Minus"
-  | Complement -> prerr_string "Complement"
 
 type instruction =
   | Return of { src : value }
   | UnaryOp of { op : unary_operator; src : value; dst : var }
 
-let pp_instruction (indent_level : int) (inst : instruction) : unit =
-  prerr_indent indent_level;
-  match inst with
-  | Return { src } ->
-      prerr_string "return ";
-      pp_value src;
-      prerr_newline ()
-  | UnaryOp { op; src; dst } ->
-      prerr_string "Unary(op=";
-      pp_unary_operator op;
-      prerr_string ", src=";
-      pp_value src;
-      prerr_string ", dst=";
-      pp_var dst;
-      prerr_string ")";
-      prerr_newline ()
-
 type func = Func of { name : string; insts : instruction list }
-
-let pp_func (indent_level : int) = function
-  | Func { name; insts } ->
-      prerr_indent indent_level;
-      prerr_endline ("func " ^ name);
-      List.iter (fun inst -> pp_instruction (indent_level + 1) inst) insts
-
 type t = Programme of func
 
-let pp_t = function
-  | Programme f ->
-      prerr_endline "programme";
-      pp_func 1 f
+module Pp : sig
+  val pp : t -> Buffer.t
+end = struct
+  let indent_size = 2
+
+  let add_indent (buf : Buffer.t) (indent_level : int) : unit =
+    Buffer.add_string buf (String.make (indent_level * indent_size) ' ')
+
+  let pp_var (buf : Buffer.t) = function
+    | Var { identifier } -> Buffer.add_string buf @@ "Var(%" ^ identifier ^ ")"
+
+  let pp_value (buf : Buffer.t) = function
+    | Constant i ->
+        Buffer.add_string buf "Constant(";
+        Buffer.add_string buf (string_of_int i);
+        Buffer.add_string buf ")"
+    | Variable v -> pp_var buf v
+
+  let pp_unary_operator (buf : Buffer.t) = function
+    | Minus -> Buffer.add_string buf "Minus"
+    | Complement -> Buffer.add_string buf "Complement"
+
+  let pp_instruction (buf : Buffer.t) (indent_level : int) (inst : instruction)
+      : unit =
+    add_indent buf indent_level;
+    match inst with
+    | Return { src } ->
+        Buffer.add_string buf "return ";
+        pp_value buf src;
+        Buffer.add_string buf "\n"
+    | UnaryOp { op; src; dst } ->
+        Buffer.add_string buf "Unary(op=";
+        pp_unary_operator buf op;
+        Buffer.add_string buf ", src=";
+        pp_value buf src;
+        Buffer.add_string buf ", dst=";
+        pp_var buf dst;
+        Buffer.add_string buf ")\n"
+
+  let pp_func (buf : Buffer.t) (indent_level : int) = function
+    | Func { name; insts } ->
+        add_indent buf indent_level;
+        Buffer.add_string buf ("func " ^ name);
+        List.iter (fun inst -> pp_instruction buf (indent_level + 1) inst) insts
+
+  let pp (ir : t) : Buffer.t =
+    let buf = Buffer.create 256 in
+    match ir with
+    | Programme f ->
+        Buffer.add_string buf "programme\n";
+        pp_func buf 1 f;
+        buf
+end

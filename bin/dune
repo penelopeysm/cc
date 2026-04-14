@@ -1,7 +1,7 @@
 (executable
  (public_name cccc)
  (name main)
- (libraries cccc climate))
+ (libraries cccc climate ANSITerminal))
 
 (executable
  (public_name ccccd)
