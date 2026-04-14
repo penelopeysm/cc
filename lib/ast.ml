@@ -31,7 +31,8 @@ end = struct
     add_indent buf indent_level;
     Buffer.add_string buf "UnaryOperator ";
     Buffer.add_string buf
-      (match op with Decrement -> "--" | Minus -> "-" | Complement -> "~")
+      (match op with Decrement -> "--" | Minus -> "-" | Complement -> "~");
+    Buffer.add_string buf "\n"
 
   let rec pp_exp (buf : Buffer.t) (e : exp) (indent_level : int) : unit =
     match e with

@@ -7,17 +7,37 @@ let print_with_box (styles : ANSITerminal.style list) (title : string)
     if List.mem ANSITerminal.Bold styles then styles
     else ANSITerminal.Bold :: styles
   in
-  let border = String.make (String.length title + 4) '*' in
-  ANSITerminal.prerr_string styles border;
-  prerr_newline ();
-  ANSITerminal.prerr_string styles_with_bold ("* " ^ title ^ " *");
-  prerr_newline ();
-  ANSITerminal.prerr_string styles border;
-  prerr_newline ();
-  ANSITerminal.prerr_string styles content;
-  prerr_newline ();
-  ANSITerminal.prerr_string styles border;
-  prerr_newline ()
+  let content =
+    let n = String.length content in
+    if n > 0 && content.[n - 1] = '\n' then String.sub content 0 (n - 1)
+    else content
+  in
+  let content_lines = String.split_on_char '\n' content in
+  let inner_width =
+    List.fold_left max (String.length title)
+      (List.map String.length content_lines)
+  in
+  let hbar =
+    let buf = Buffer.create ((inner_width + 2) * 3) in
+    for _ = 1 to inner_width + 2 do
+      Buffer.add_string buf "\xe2\x94\x80"
+    done;
+    Buffer.contents buf
+  in
+  let pad s = s ^ String.make (inner_width - String.length s) ' ' in
+  let print_line s =
+    ANSITerminal.prerr_string styles s;
+    prerr_newline ()
+  in
+  print_line ("\xe2\x94\x8c" ^ hbar ^ "\xe2\x94\x90");
+  ANSITerminal.prerr_string styles "\xe2\x94\x82 ";
+  ANSITerminal.prerr_string styles_with_bold (pad title);
+  print_line " \xe2\x94\x82";
+  print_line ("\xe2\x94\x9c" ^ hbar ^ "\xe2\x94\xa4");
+  List.iter
+    (fun line -> print_line ("\xe2\x94\x82 " ^ pad line ^ " \xe2\x94\x82"))
+    content_lines;
+  print_line ("\xe2\x94\x94" ^ hbar ^ "\xe2\x94\x98")
 
 let main ~(input_fname : string) ~(output_fname : string option)
     ~(dump_ast : bool) ~(dump_ir : bool) ~(parse : bool) ~(tacky : bool) : unit

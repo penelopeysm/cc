@@ -51,14 +51,14 @@ end = struct
   let pp_func (buf : Buffer.t) (indent_level : int) = function
     | Func { name; insts } ->
         add_indent buf indent_level;
-        Buffer.add_string buf ("func " ^ name);
+        Buffer.add_string buf ("func " ^ name ^ ":\n");
         List.iter (fun inst -> pp_instruction buf (indent_level + 1) inst) insts
 
   let pp (ir : t) : Buffer.t =
     let buf = Buffer.create 256 in
     match ir with
     | Programme f ->
-        Buffer.add_string buf "programme\n";
+        Buffer.add_string buf "programme:\n";
         pp_func buf 1 f;
         buf
 end
