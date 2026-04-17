@@ -24,7 +24,7 @@ open Ast
 %left STAR SLASH PERCENT
 (* This doesn't have a production rule: the lexer never generates it.
    It is basically a phantom thing that is used only to make sure that unary
-   minus binds tighter than binary ops. *)
+   operators bind tighter than binary ops. *)
 %nonassoc PREFIX
 
 (* Keywords *)
@@ -49,7 +49,7 @@ expression:
   | LEFT_PAREN; expr = expression; RIGHT_PAREN { expr }
 
   | MINUS; operand = expression %prec PREFIX { UnaryOp{ op = Minus; operand } }
-  | TILDE; operand = expression { UnaryOp{ op = Complement; operand } }
+  | TILDE; operand = expression %prec PREFIX { UnaryOp{ op = Complement; operand } }
 
   | left_operand = expression; PLUS; right_operand = expression { BinaryOp { op = Add; left_operand; right_operand } }
   | left_operand = expression; MINUS; right_operand = expression { BinaryOp {op = Subtract; left_operand; right_operand } }

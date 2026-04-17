@@ -1,4 +1,4 @@
-type register = AX | R10
+type register = AX | DX | R10 | R11
 
 type operand =
   | Register of register
@@ -8,13 +8,15 @@ type operand =
   | Stack of int
 
 type unary_operator = Neg | Not
-type binary_operator = Add | Sub | Mul
+type binary_operator = Add | Sub | Imul
 
 type instruction =
   | Movl of { src : operand; dst : operand }
   | Ret
   | Unary of { op : unary_operator; target : operand }
   | Binary of { op : binary_operator; left : operand; dst : operand }
+  | Cdq
+  | Idivl of { divisor : operand }
   (* the size here is meant to be non-negative *)
   | AllocateStack of { size : int }
 
@@ -37,9 +39,11 @@ end = struct
 
   let emit_register (buf : Buffer.t) (reg : register) : unit =
     match reg with
-    (* todo: these only refer to the lower 32 bits *)
+    (* note: these only refer to the lower 32 bits *)
     | AX -> Buffer.add_string buf "%eax"
+    | DX -> Buffer.add_string buf "%edx"
     | R10 -> Buffer.add_string buf "%r10d"
+    | R11 -> Buffer.add_string buf "%r11d"
 
   let emit_operand (buf : Buffer.t) (op : operand) : unit =
     match op with
@@ -79,10 +83,15 @@ end = struct
           (match op with
           | Add -> "   addl "
           | Sub -> "   subl "
-          | Mul -> "  imull ");
+          | Imul -> "  imull ");
         emit_operand buf left;
         Buffer.add_string buf ", ";
         emit_operand buf dst;
+        Buffer.add_char buf '\n'
+    | Cdq -> Buffer.add_string buf "   cdq\n"
+    | Idivl { divisor } ->
+        Buffer.add_string buf "  idivl ";
+        emit_operand buf divisor;
         Buffer.add_char buf '\n'
     | AllocateStack { size } ->
         Buffer.add_string buf "   subq $";
@@ -137,18 +146,25 @@ end = struct
   (* This basically means not a pseudoregister. *)
   let is_reg_mem_or_imm = function PseudoRegister _ -> false | _ -> true
   let is_reg_or_mem = function Register _ | Stack _ -> true | _ -> false
+  let is_reg = function Register _ -> true | _ -> false
 
   let validate_instruction = function
     | Movl { src; dst } -> (
         is_reg_mem_or_imm src && is_reg_or_mem dst
         (* No memory to memory moves. *)
         && match (src, dst) with Stack _, Stack _ -> false | _ -> true)
-    | Ret -> true
+    | Ret | Cdq -> true
     (* notl and negl both take r/m *)
     | Unary { op; target } -> is_reg_or_mem target
-    | Binary { op; left; dst } ->
+    | Binary { op; left; dst } -> (
         (* destination can't be an immediate *)
-        is_reg_mem_or_imm left && is_reg_or_mem dst
+        is_reg_mem_or_imm left
+        && is_reg_or_mem dst
+        (* imul destination must be a register *)
+        && (op <> Imul || is_reg dst)
+        (* can't do mem to mem *)
+        && match (left, dst) with Stack _, Stack _ -> false | _ -> true)
+    | Idivl { divisor } -> is_reg_or_mem divisor
     | AllocateStack { size } -> size >= 0
 
   let validate_instruction_with_reporting (fn_name : string)
