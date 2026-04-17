@@ -9,12 +9,38 @@ let asm_of_unary_op = function Ir.Minus -> Asm.Neg | Ir.Complement -> Asm.Not
 
 let asm_of_instruction = function
   | Ir.Return { src } ->
-      [ Asm.Mov { src = asm_of_value src; dst = Asm.Register Asm.AX }; Asm.Ret ]
+      [
+        Asm.Movl { src = asm_of_value src; dst = Asm.Register Asm.AX }; Asm.Ret;
+      ]
   | Ir.UnaryOp { op; src; dst } ->
       [
-        Asm.Mov { src = asm_of_value src; dst = asm_of_var dst };
+        Asm.Movl { src = asm_of_value src; dst = asm_of_var dst };
         Asm.Unary { op = asm_of_unary_op op; target = asm_of_var dst };
       ]
+  | Ir.BinaryOp { op; left; right; dst } -> (
+      match op with
+      (* for addl, subl and imull we need to move the left operand into the
+         destination register. The right operand can be an immediate value so we
+         can use it directly in the binary instruction. *)
+      | Ir.Add ->
+          [
+            Asm.Movl { src = asm_of_value left; dst = asm_of_var dst };
+            Asm.Binary
+              { op = Asm.Add; left = asm_of_value right; dst = asm_of_var dst };
+          ]
+      | Ir.Subtract ->
+          [
+            Asm.Movl { src = asm_of_value left; dst = asm_of_var dst };
+            Asm.Binary
+              { op = Asm.Sub; left = asm_of_value right; dst = asm_of_var dst };
+          ]
+      | Ir.Multiply ->
+          [
+            Asm.Movl { src = asm_of_value left; dst = asm_of_var dst };
+            Asm.Binary
+              { op = Asm.Mul; left = asm_of_value right; dst = asm_of_var dst };
+          ]
+      | Ir.Divide | Ir.Modulo -> failwith "TODO")
 
 let asm_of_func = function
   | Ir.Func { name; insts } ->

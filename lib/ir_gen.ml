@@ -1,3 +1,6 @@
+(* IR generation from AST. Because the IR is linear, we need to essentially
+   continually append instructions to the end of the list. We achieve this
+   using a builder module that remembers its progress so far. *)
 module Builder = struct
   type t = {
     (* build from the head of the list then reverse at the end *)
@@ -19,6 +22,11 @@ module Builder = struct
     Ir.Var { identifier = nm }
 end
 
+(* The general pattern for these lowering functions is to add instructions to
+   the builder as we go, and return the Ir.Var that holds the result of the
+   expression (because it might be used in a later instruction). This works
+   nicely for expressions; we haven't yet gotten to statements! *)
+
 let rec lower_exp (exp : Ast.exp) (b : Builder.t) : Ir.value =
   match exp with
   | Ast.IntLiteral { value } -> Ir.Constant value
@@ -36,7 +44,29 @@ let rec lower_exp (exp : Ast.exp) (b : Builder.t) : Ir.value =
       in
       Builder.cat_inst new_op b;
       Ir.Variable dst_var
-  | Ast.BinaryOp { op; left_operand; right_operand } -> failwith "TODO"
+  | Ast.BinaryOp { op; left_operand; right_operand } ->
+      let operand_left_value = lower_exp left_operand b in
+      let operand_right_value = lower_exp right_operand b in
+      let dst_var = Builder.make_temp_var b in
+      let ir_op =
+        match op with
+        | Ast.Add -> Ir.Add
+        | Ast.Subtract -> Ir.Subtract
+        | Ast.Multiply -> Ir.Multiply
+        | Ast.Divide -> Ir.Divide
+        | Ast.Modulo -> Ir.Modulo
+      in
+      let new_op =
+        Ir.BinaryOp
+          {
+            op = ir_op;
+            left = operand_left_value;
+            right = operand_right_value;
+            dst = dst_var;
+          }
+      in
+      Builder.cat_inst new_op b;
+      Ir.Variable dst_var
 
 let lower_statement (stmt : Ast.statement) : Ir.instruction list =
   let b = Builder.create () in

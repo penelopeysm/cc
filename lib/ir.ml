@@ -1,10 +1,12 @@
 type var = Var of { identifier : string }
 type value = Constant of int | Variable of var
 type unary_operator = Minus | Complement
+type binary_operator = Add | Subtract | Multiply | Divide | Modulo
 
 type instruction =
   | Return of { src : value }
   | UnaryOp of { op : unary_operator; src : value; dst : var }
+  | BinaryOp of { op : binary_operator; left : value; right : value; dst : var }
 
 type func = Func of { name : string; insts : instruction list }
 type t = Programme of func
@@ -27,9 +29,18 @@ end = struct
         Buffer.add_string buf ")"
     | Variable v -> pp_var buf v
 
-  let pp_unary_operator (buf : Buffer.t) = function
-    | Minus -> Buffer.add_string buf "Minus"
-    | Complement -> Buffer.add_string buf "Complement"
+  let pp_unary_operator (buf : Buffer.t) (unop : unary_operator) =
+    Buffer.add_string buf
+      (match unop with Minus -> "Minus" | Complement -> "Complement")
+
+  let pp_binary_operator (buf : Buffer.t) (binop : binary_operator) =
+    Buffer.add_string buf
+      (match binop with
+      | Add -> "Add"
+      | Subtract -> "Subtract"
+      | Multiply -> "Multiply"
+      | Divide -> "Divide"
+      | Modulo -> "Modulo")
 
   let pp_instruction (buf : Buffer.t) (indent_level : int) (inst : instruction)
       : unit =
@@ -40,12 +51,20 @@ end = struct
         pp_value buf src;
         Buffer.add_string buf "\n"
     | UnaryOp { op; src; dst } ->
-        Buffer.add_string buf "Unary(op=";
+        pp_var buf dst;
+        Buffer.add_string buf " = Unary(op=";
         pp_unary_operator buf op;
         Buffer.add_string buf ", src=";
         pp_value buf src;
-        Buffer.add_string buf ", dst=";
+        Buffer.add_string buf ")\n"
+    | BinaryOp { op; left; right; dst } ->
         pp_var buf dst;
+        Buffer.add_string buf " = Binary(op=";
+        pp_binary_operator buf op;
+        Buffer.add_string buf ", left=";
+        pp_value buf left;
+        Buffer.add_string buf ", right=";
+        pp_value buf right;
         Buffer.add_string buf ")\n"
 
   let pp_func (buf : Buffer.t) (indent_level : int) = function

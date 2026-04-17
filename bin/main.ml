@@ -63,7 +63,16 @@ let main ~(input_fname : string) ~(output_fname : string option)
       if tacky then exit 0;
 
       let asm = Asm_gen.asm_of_ir ir in
-      let asm_text = Emit.string_of_asm asm in
+      (* Check that ASM is valid *)
+      if not (Asm.Validate.validate asm) then begin
+        print_with_box
+          [ ANSITerminal.Foreground ANSITerminal.Red ]
+          "Invalid Assembly"
+          (Asm.Emit.string_of_asm asm);
+        exit 1
+      end;
+
+      let asm_text = Asm.Emit.string_of_asm asm in
       match output_fname with
       | Some fname ->
           Out_channel.with_open_text fname (fun out_channel ->

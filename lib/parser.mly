@@ -51,7 +51,7 @@ expression:
   | MINUS; operand = expression %prec PREFIX { UnaryOp{ op = Minus; operand } }
   | TILDE; operand = expression { UnaryOp{ op = Complement; operand } }
 
-  | left_operand = expression; PLUS; right_operand = expression { BinaryOp { op = Plus; left_operand; right_operand } }
+  | left_operand = expression; PLUS; right_operand = expression { BinaryOp { op = Add; left_operand; right_operand } }
   | left_operand = expression; MINUS; right_operand = expression { BinaryOp {op = Subtract; left_operand; right_operand } }
   | left_operand = expression; STAR; right_operand = expression { BinaryOp { op = Multiply; left_operand; right_operand } }
   | left_operand = expression; SLASH; right_operand = expression { BinaryOp { op = Divide; left_operand; right_operand } }

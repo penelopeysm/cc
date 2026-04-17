@@ -37,9 +37,10 @@ let fix_inst (a : FixPseudo.t) (inst : Asm.instruction) : Asm.instruction =
   | Asm.Ret -> inst
   | Asm.AllocateStack _ -> inst
   (* patch operands *)
-  | Asm.Mov { src; dst } ->
-      Asm.Mov { src = fix_operand a src; dst = fix_operand a dst }
+  | Asm.Movl { src; dst } ->
+      Asm.Movl { src = fix_operand a src; dst = fix_operand a dst }
   | Asm.Unary { op; target } -> Asm.Unary { op; target = fix_operand a target }
+  | Asm.Binary _ -> inst
 
 (* Fixes up the instruction list to replace pseudoregisters with stack
    locations. Additionally returns the amount of stack space that is required to
@@ -58,10 +59,10 @@ let replace_pseudoregisters (insts : Asm.instruction list) :
 
 let fix_movl_inst (inst : Asm.instruction) : Asm.instruction list =
   match inst with
-  | Asm.Mov { src = Asm.Stack s1; dst = Asm.Stack s2 } ->
+  | Asm.Movl { src = Asm.Stack s1; dst = Asm.Stack s2 } ->
       [
-        Asm.Mov { src = Asm.Stack s1; dst = Asm.Register R10 };
-        Asm.Mov { src = Asm.Register R10; dst = Asm.Stack s2 };
+        Asm.Movl { src = Asm.Stack s1; dst = Asm.Register R10 };
+        Asm.Movl { src = Asm.Register R10; dst = Asm.Stack s2 };
       ]
   | _ -> [ inst ]
 

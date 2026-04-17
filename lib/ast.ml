@@ -3,7 +3,7 @@ type identifier = Identifier of { name : string }
 let get_identifier_name (Identifier { name }) : string = name
 
 type unary_operator = Decrement | Minus | Complement
-type binary_operator = Plus | Subtract | Multiply | Divide | Modulo
+type binary_operator = Add | Subtract | Multiply | Divide | Modulo
 
 type exp =
   | IntLiteral of { value : int }
@@ -46,7 +46,7 @@ end = struct
     Buffer.add_string buf "BinaryOperator ";
     Buffer.add_string buf
       (match op with
-      | Plus -> "+"
+      | Add -> "+"
       | Subtract -> "-"
       | Multiply -> "*"
       | Divide -> "/"
