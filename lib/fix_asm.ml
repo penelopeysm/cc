@@ -69,11 +69,13 @@ let fix_invalid_insts (insts : Asm.instruction list) : Asm.instruction list =
           Asm.Movl { src = Asm.Register R10; dst = Asm.Stack s2 };
         ]
     | Asm.Binary { op; left = Asm.Stack s1; dst = Asm.Stack s2 } ->
-        [ Asm.Movl { src = Asm.Stack s1; dst = Asm.Register R10 } ]
+        (* binary operations don't work with memory <=> memory, so
+           we move the first of them into a scratch register *)
+        Asm.Movl { src = Asm.Stack s1; dst = Asm.Register R10 }
         (* The following binary operation might still have to be fixed, for
            example if it's an imul which can't take a memory destination as
            the destination. Easy fix: just recursively call f. *)
-        @ f (Asm.Binary { op; left = Asm.Register R10; dst = Asm.Stack s2 })
+        :: f (Asm.Binary { op; left = Asm.Register R10; dst = Asm.Stack s2 })
     | Asm.Binary { op; left; dst = Asm.Stack s } -> (
         (* this branch targets imul with a memory destination *)
         match op with

@@ -21,6 +21,11 @@ rule read =
       | id -> IDENTIFIER id
     }
   | "--" { DECREMENT }
+  | "<<" { SHIFT_LEFT }
+  | ">>" { SHIFT_RIGHT }
+  | '&' { AMPERSAND }
+  | '|' { PIPE }
+  | '^' { CARET }
   | '-' { MINUS }
   | '~' { TILDE }
   | '(' { LEFT_PAREN }

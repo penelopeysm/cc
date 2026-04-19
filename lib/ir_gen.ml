@@ -55,6 +55,11 @@ let rec lower_exp (exp : Ast.exp) (b : Builder.t) : Ir.value =
         | Ast.Multiply -> Ir.Multiply
         | Ast.Divide -> Ir.Divide
         | Ast.Modulo -> Ir.Modulo
+        | Ast.BitwiseAnd -> Ir.BitwiseAnd
+        | Ast.BitwiseOr -> Ir.BitwiseOr
+        | Ast.BitwiseXor -> Ir.BitwiseXor
+        | Ast.ShiftLeft -> Ir.ShiftLeft
+        | Ast.ShiftRight -> Ir.ShiftRight
       in
       let new_op =
         Ir.BinaryOp

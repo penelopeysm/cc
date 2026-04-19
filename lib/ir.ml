@@ -1,7 +1,18 @@
 type var = Var of { identifier : string }
 type value = Constant of int | Variable of var
 type unary_operator = Minus | Complement
-type binary_operator = Add | Subtract | Multiply | Divide | Modulo
+
+type binary_operator =
+  | Add
+  | Subtract
+  | Multiply
+  | Divide
+  | Modulo
+  | BitwiseAnd
+  | BitwiseOr
+  | BitwiseXor
+  | ShiftLeft
+  | ShiftRight
 
 type instruction =
   | Return of { src : value }
@@ -40,7 +51,12 @@ end = struct
       | Subtract -> "Subtract"
       | Multiply -> "Multiply"
       | Divide -> "Divide"
-      | Modulo -> "Modulo")
+      | Modulo -> "Modulo"
+      | BitwiseAnd -> "BitwiseAnd"
+      | BitwiseOr -> "BitwiseOr"
+      | BitwiseXor -> "BitwiseXor"
+      | ShiftLeft -> "ShiftLeft"
+      | ShiftRight -> "ShiftRight")
 
   let pp_instruction (buf : Buffer.t) (indent_level : int) (inst : instruction)
       : unit =

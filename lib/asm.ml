@@ -1,4 +1,7 @@
-type register = AX | DX | R10 | R11
+type register = AX | BX | CX | DX | R10 | R11
+
+(* 8 bytes, 4 bytes, 2 bytes, 1 byte *)
+type size = QWord | DWord | Word | Byte
 
 type operand =
   | Register of register
@@ -8,7 +11,11 @@ type operand =
   | Stack of int
 
 type unary_operator = Neg | Not
-type binary_operator = Add | Sub | Imul
+
+(* For right shift, we need SAR for signed operands and SHR for unsigned. Right
+   now we only have signed operands (i.e. int literals and combinations thereof)
+   so we only have SAR. For left shift SAL and SHL are the same. *)
+type binary_operator = Add | Sub | Imul | And | Or | Xor | Sal | Sar
 
 type instruction =
   | Movl of { src : operand; dst : operand }
@@ -37,17 +44,41 @@ end = struct
     | "linux" -> Linux
     | _ -> Other
 
-  let emit_register (buf : Buffer.t) (reg : register) : unit =
-    match reg with
-    (* note: these only refer to the lower 32 bits *)
-    | AX -> Buffer.add_string buf "%eax"
-    | DX -> Buffer.add_string buf "%edx"
-    | R10 -> Buffer.add_string buf "%r10d"
-    | R11 -> Buffer.add_string buf "%r11d"
+  let emit_register ?(sz : size = DWord) (buf : Buffer.t) (reg : register) :
+      unit =
+    let reg_name =
+      match (sz, reg) with
+      | QWord, AX -> "%rax"
+      | DWord, AX -> "%eax"
+      | Word, AX -> "%ax"
+      | Byte, AX -> "%al"
+      | QWord, BX -> "%rbx"
+      | DWord, BX -> "%ebx"
+      | Word, BX -> "%bx"
+      | Byte, BX -> "%bl"
+      | QWord, CX -> "%rcx"
+      | DWord, CX -> "%ecx"
+      | Word, CX -> "%cx"
+      | Byte, CX -> "%cl"
+      | QWord, DX -> "%rdx"
+      | DWord, DX -> "%edx"
+      | Word, DX -> "%dx"
+      | Byte, DX -> "%dl"
+      | QWord, R10 -> "%r10"
+      | DWord, R10 -> "%r10d"
+      | Word, R10 -> "%r10w"
+      | Byte, R10 -> "%r10b"
+      | QWord, R11 -> "%r11"
+      | DWord, R11 -> "%r11d"
+      | Word, R11 -> "%r11w"
+      | Byte, R11 -> "%r11b"
+    in
+    Buffer.add_string buf reg_name
 
-  let emit_operand (buf : Buffer.t) (op : operand) : unit =
+  let emit_operand ?(register_size : size = DWord) (buf : Buffer.t)
+      (op : operand) : unit =
     match op with
-    | Register r -> emit_register buf r
+    | Register r -> emit_register ~sz:register_size buf r
     | Immediate i ->
         Buffer.add_char buf '$';
         Buffer.add_string buf (string_of_int i)
@@ -83,8 +114,14 @@ end = struct
           (match op with
           | Add -> "   addl "
           | Sub -> "   subl "
-          | Imul -> "  imull ");
-        emit_operand buf left;
+          | Imul -> "  imull "
+          | And -> "   andl "
+          | Or -> "   orl "
+          | Xor -> "   xorl "
+          | Sal -> "   sall "
+          | Sar -> "   sarl ");
+        let left_sz = match op with Sal | Sar -> Byte | _ -> DWord in
+        emit_operand ~register_size:left_sz buf left;
         Buffer.add_string buf ", ";
         emit_operand buf dst;
         Buffer.add_char buf '\n'
@@ -147,6 +184,21 @@ end = struct
   let is_reg_mem_or_imm = function PseudoRegister _ -> false | _ -> true
   let is_reg_or_mem = function Register _ | Stack _ -> true | _ -> false
   let is_reg = function Register _ -> true | _ -> false
+  let is_imm = function Immediate _ -> true | _ -> false
+
+  let validate_binary op left dst =
+    (* destination can't be an immediate *)
+    is_reg_mem_or_imm left && is_reg_or_mem dst
+    (* can't do mem to mem *)
+    && (match (left, dst) with Stack _, Stack _ -> false | _ -> true)
+    (* and now for operation-specific constraints *)
+    &&
+    match op with
+    | Add | Sub | And | Or | Xor -> true
+    (* SAL/SAR shift amount must either be in CL or an immediate *)
+    | Sal | Sar -> left = Register CX || is_imm left
+    (* imul destination must be a register *)
+    | Imul -> is_reg dst
 
   let validate_instruction = function
     | Movl { src; dst } -> (
@@ -156,14 +208,7 @@ end = struct
     | Ret | Cdq -> true
     (* notl and negl both take r/m *)
     | Unary { op; target } -> is_reg_or_mem target
-    | Binary { op; left; dst } -> (
-        (* destination can't be an immediate *)
-        is_reg_mem_or_imm left
-        && is_reg_or_mem dst
-        (* imul destination must be a register *)
-        && (op <> Imul || is_reg dst)
-        (* can't do mem to mem *)
-        && match (left, dst) with Stack _, Stack _ -> false | _ -> true)
+    | Binary { op; left; dst } -> validate_binary op left dst
     | Idivl { divisor } -> is_reg_or_mem divisor
     | AllocateStack { size } -> size >= 0
 

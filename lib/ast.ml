@@ -3,7 +3,18 @@ type identifier = Identifier of { name : string }
 let get_identifier_name (Identifier { name }) : string = name
 
 type unary_operator = Decrement | Minus | Complement
-type binary_operator = Add | Subtract | Multiply | Divide | Modulo
+
+type binary_operator =
+  | Add
+  | Subtract
+  | Multiply
+  | Divide
+  | Modulo
+  | BitwiseAnd
+  | BitwiseOr
+  | BitwiseXor
+  | ShiftLeft
+  | ShiftRight
 
 type exp =
   | IntLiteral of { value : int }
@@ -50,7 +61,12 @@ end = struct
       | Subtract -> "-"
       | Multiply -> "*"
       | Divide -> "/"
-      | Modulo -> "%");
+      | Modulo -> "%"
+      | BitwiseAnd -> "&"
+      | BitwiseOr -> "|"
+      | BitwiseXor -> "^"
+      | ShiftLeft -> "<<"
+      | ShiftRight -> ">>");
     Buffer.add_string buf "\n"
 
   let rec pp_exp (buf : Buffer.t) (e : exp) (indent_level : int) : unit =

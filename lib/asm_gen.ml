@@ -35,12 +35,48 @@ let asm_of_instruction = function
           Asm.Movl { src = result_register; dst = asm_of_var dst };
         ]
       in
+      let shift_helper asm_op =
+        let first_inst =
+          Asm.Movl { src = asm_of_value left; dst = asm_of_var dst }
+        in
+        let remaining_insts =
+          match right with
+          | Ir.Constant immediate ->
+              (* Easy peasy, just emit as-is *)
+              [
+                Asm.Binary
+                  {
+                    op = asm_op;
+                    left = Asm.Immediate immediate;
+                    dst = asm_of_var dst;
+                  };
+              ]
+          | Ir.Variable _ ->
+              (* This is more complicated because SAL/SAR only work on the CL
+               register (which is the lowest 8 bits of CX) *)
+              [
+                Asm.Movl { src = asm_of_value right; dst = Asm.Register Asm.CX };
+                Asm.Binary
+                  {
+                    op = asm_op;
+                    left = Asm.Register Asm.CX;
+                    dst = asm_of_var dst;
+                  };
+              ]
+        in
+        first_inst :: remaining_insts
+      in
       match op with
       | Ir.Add -> addsubmul_helper Asm.Add
       | Ir.Subtract -> addsubmul_helper Asm.Sub
       | Ir.Multiply -> addsubmul_helper Asm.Imul
       | Ir.Divide -> divmod_helper (Asm.Register Asm.AX)
-      | Ir.Modulo -> divmod_helper (Asm.Register Asm.DX))
+      | Ir.Modulo -> divmod_helper (Asm.Register Asm.DX)
+      | Ir.BitwiseAnd -> addsubmul_helper Asm.And
+      | Ir.BitwiseOr -> addsubmul_helper Asm.Or
+      | Ir.BitwiseXor -> addsubmul_helper Asm.Xor
+      | Ir.ShiftLeft -> shift_helper Asm.Sal
+      | Ir.ShiftRight -> shift_helper Asm.Sar)
 
 let asm_of_func = function
   | Ir.Func { name; insts } ->
